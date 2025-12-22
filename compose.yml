@@ -1,0 +1,290 @@
+version: "3.9"
+
+# This compose file deploys the Wazuh single‑node stack (manager, indexer and dashboard)
+# alongside a small NetBird mesh used to interconnect your endpoints.  It updates the
+# services to the latest available versions as of December 2025.  The `wazuh_*`
+# containers are pinned to the 4.14.1 tag (released November 2025) while the
+# NetBird peers use the latest agent image (v0.60 series).  Each NetBird peer
+# lives on its own Docker bridge network, but they all join the same NetBird
+# overlay via the provided `NB_SETUP_KEY`.  A fourth peer runs inside the
+# `wazuh_net` network so that the Wazuh manager can reach the overlay without any
+# additional port forwarding.
+
+networks:
+  wazuh_net:
+    driver: bridge
+  nb1_net:
+    driver: bridge
+  nb2_net:
+    driver: bridge
+  nb3_net:
+    driver: bridge
+  nb_main:
+    driver: bridge
+
+services:
+  # ---------------------------------------------------------------------------
+  # Wazuh components (single‑node stack) – updated to version 4.14.1
+  # ---------------------------------------------------------------------------
+  wazuh.indexer:
+    image: wazuh/wazuh-indexer:4.14.1
+    hostname: wazuh.indexer
+    networks:
+      - wazuh_net
+    environment:
+      # Allocate memory for the underlying OpenSearch JVM.
+      - "OPENSEARCH_JAVA_OPTS=-Xms1g -Xmx1g"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536
+        hard: 65536
+    volumes:
+      # Persist the indexer data between restarts.
+      - wazuh-indexer-data:/var/lib/wazuh-indexer
+
+  wazuh.manager:
+    image: wazuh/wazuh-manager:4.14.1
+    hostname: wazuh.manager
+    networks:
+      - wazuh_net
+    depends_on:
+      - wazuh.indexer
+    ports:
+      # Agent events, enrollment and API
+      - "1514:1514"
+      - "1515:1515"
+      - "514:514/udp"
+      - "55000:55000"
+    environment:
+      # Tell the manager where to find the indexer (uses HTTPS by default).
+      - INDEXER_URL=https://wazuh.indexer:9200
+      - INDEXER_USERNAME=admin
+      - INDEXER_PASSWORD=SecretPassword
+      # Filebeat TLS settings; set verification to 'none' if you skip mounting certificates.
+      # Disable certificate verification to simplify the demo.  If you mount
+      # proper TLS certificates, set verification back to 'full' and point
+      # SSL_CERTIFICATE_AUTHORITIES/SSL_CERTIFICATE/SSL_KEY at your files.
+      - FILEBEAT_SSL_VERIFICATION_MODE=none
+      # These variables are ignored when verification is disabled but are
+      # defined for completeness.
+      - SSL_CERTIFICATE_AUTHORITIES=/etc/ssl/root-ca.pem
+      - SSL_CERTIFICATE=/etc/ssl/filebeat.pem
+      - SSL_KEY=/etc/ssl/filebeat.key
+      # API credentials for the Wazuh web UI
+      - API_USERNAME=wazuh-wui
+      - API_PASSWORD=MyS3cr37P450r.*-
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 655360
+        hard: 655360
+    volumes:
+      # Persist manager data (alerts, configuration, logs).
+      - wazuh-manager-data:/var/ossec/data
+
+  wazuh.dashboard:
+    image: wazuh/wazuh-dashboard:4.14.1
+    hostname: wazuh.dashboard
+    networks:
+      - wazuh_net
+    depends_on:
+      - wazuh.indexer
+      - wazuh.manager
+    ports:
+      # Expose the dashboard via HTTPS.  By default the dashboard listens on
+      # port 443 inside the container, so we map it to 5601 on the host for
+      # convenience.
+      - "5601:443"
+    environment:
+      # Credentials used by the dashboard to authenticate to the indexer and manager.
+      - INDEXER_USERNAME=admin
+      - INDEXER_PASSWORD=SecretPassword
+      - WAZUH_API_URL=https://wazuh.manager
+      - DASHBOARD_USERNAME=kibanaserver
+      - DASHBOARD_PASSWORD=kibanaserver
+      - API_USERNAME=wazuh-wui
+      - API_PASSWORD=MyS3cr37P450r.*-
+    volumes:
+      # Persist dashboard configuration and custom assets.
+      - wazuh-dashboard-data:/var/lib/wazuh-dashboard
+
+  # ---------------------------------------------------------------------------
+  # NetBird peers – one lives on the Wazuh network, three others on isolated nets
+  # ---------------------------------------------------------------------------
+  netbird-peer-wazuh:
+    # Pin the NetBird client to the latest stable release (0.60.8 as of Dec 2025)
+    image: netbirdio/netbird:0.60.8
+    container_name: netbird-peer-wazuh
+    networks:
+      - wazuh_net
+    cap_add:
+      - NET_ADMIN
+      - SYS_ADMIN
+      - SYS_RESOURCE
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    environment:
+      # Use the setup key from your NetBird management portal to auto‑enroll.
+      - NB_SETUP_KEY=${NB_SETUP_KEY}
+    command: ["sh", "-lc", "netbird up --setup-key ${NB_SETUP_KEY} && tail -f /dev/null"]
+    depends_on:
+      - wazuh.manager
+
+  netbird-peer-1:
+    image: netbirdio/netbird:0.60.8
+    container_name: netbird-peer-1
+    networks:
+      - nb1_net
+    cap_add:
+      - NET_ADMIN
+      - SYS_ADMIN
+      - SYS_RESOURCE
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    environment:
+      - NB_SETUP_KEY=${NB_SETUP_KEY}
+    command: ["sh", "-lc", "netbird up --setup-key ${NB_SETUP_KEY} && tail -f /dev/null"]
+
+  netbird-peer-2:
+    image: netbirdio/netbird:0.60.8
+    container_name: netbird-peer-2
+    networks:
+      - nb2_net
+    cap_add:
+      - NET_ADMIN
+      - SYS_ADMIN
+      - SYS_RESOURCE
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    environment:
+      - NB_SETUP_KEY=${NB_SETUP_KEY}
+    command: ["sh", "-lc", "netbird up --setup-key ${NB_SETUP_KEY} && tail -f /dev/null"]
+
+  netbird-peer-3:
+    image: netbirdio/netbird:0.60.8
+    container_name: netbird-peer-3
+    networks:
+      - nb3_net
+    cap_add:
+      - NET_ADMIN
+      - SYS_ADMIN
+      - SYS_RESOURCE
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    environment:
+      - NB_SETUP_KEY=${NB_SETUP_KEY}
+    command: ["sh", "-lc", "netbird up --setup-key ${NB_SETUP_KEY} && tail -f /dev/null"]
+
+  netbird:
+    container_name: netbird
+    hostname: <HOSTNAME>
+    cap_add:
+      - NET_ADMIN
+      - SYS_ADMIN
+      - SYS_RESOURCE
+    network_mode: host
+    networks:
+      - nb_main
+    environment:
+      - NB_SETUP_KEY=${NB_SETUP_KEY}
+    #volumes:
+    #  - netbird-client:/var/lib/netbird
+    image: netbirdio/netbird:0.60.8
+
+  # ---------------------------------------------------------------------------
+  # NetBird -> Wazuh "overlay gateway"
+  # Listens on the NetBird peer's overlay IP and forwards traffic to wazuh.manager
+  # inside the wazuh_net Docker network.
+  #
+  # In the NetBird admin UI, read the overlay IP of `netbird-peer-wazuh` and set:
+  #   WAZUH_OVERLAY_ADDR=<overlay-ip>
+  # in your .env. All "remote" agents below will connect to that address.
+  # ---------------------------------------------------------------------------
+  wazuh-overlay-gateway:
+    image: alpine:3.20
+    container_name: wazuh-overlay-gateway
+    depends_on:
+      - netbird-peer-wazuh
+      - wazuh.manager
+    network_mode: "service:netbird-peer-wazuh"
+    command: >
+      sh -lc '
+        apk add --no-cache socat >/dev/null &&
+        echo "Forwarding overlay -> wazuh.manager (1514/tcp, 1515/tcp, 55000/tcp, 514/udp)" &&
+        socat TCP-LISTEN:1514,fork,reuseaddr TCP:wazuh.manager:1514 &
+        socat TCP-LISTEN:1515,fork,reuseaddr TCP:wazuh.manager:1515 &
+        socat TCP-LISTEN:55000,fork,reuseaddr TCP:wazuh.manager:55000 &
+        socat UDP-RECVFROM:514,fork,reuseaddr UDP-SENDTO:wazuh.manager:514 &
+        wait
+      '
+
+  # ---------------------------------------------------------------------------
+  # Ubuntu "endpoints" with Wazuh agent installed (built from ./wazuh-agent-ubuntu)
+  # At least one endpoint per network.
+  #
+  # Note: the three endpoints on nb*_net use the NetBird peer network namespace
+  # (network_mode: service:netbird-peer-X) so they have overlay connectivity
+  # without embedding NetBird in the endpoint image.
+  # ---------------------------------------------------------------------------
+  ubuntu-agent-wazuh-net:
+    build:
+      context: ./wazuh-agent-ubuntu
+    container_name: ubuntu-agent-wazuh-net
+    hostname: ubuntu-agent-wazuh-net
+    networks:
+      - wazuh_net
+    environment:
+      - WAZUH_MANAGER=wazuh.manager
+      - WAZUH_AGENT_NAME=ubuntu-agent-wazuh-net
+    depends_on:
+      - wazuh.manager
+
+  ubuntu-agent-nb1:
+    build:
+      context: ./wazuh-agent-ubuntu
+    container_name: ubuntu-agent-nb1
+    hostname: ubuntu-agent-nb1
+    network_mode: "service:netbird-peer-1"
+    environment:
+      - WAZUH_MANAGER=${WAZUH_OVERLAY_ADDR}
+      - WAZUH_AGENT_NAME=ubuntu-agent-nb1
+    depends_on:
+      - wazuh-overlay-gateway
+      - netbird-peer-1
+
+  ubuntu-agent-nb2:
+    build:
+      context: ./wazuh-agent-ubuntu
+    container_name: ubuntu-agent-nb2
+    hostname: ubuntu-agent-nb2
+    network_mode: "service:netbird-peer-2"
+    environment:
+      - WAZUH_MANAGER=${WAZUH_OVERLAY_ADDR}
+      - WAZUH_AGENT_NAME=ubuntu-agent-nb2
+    depends_on:
+      - wazuh-overlay-gateway
+      - netbird-peer-2
+
+  ubuntu-agent-nb3:
+    build:
+      context: ./wazuh-agent-ubuntu
+    container_name: ubuntu-agent-nb3
+    hostname: ubuntu-agent-nb3
+    network_mode: "service:netbird-peer-3"
+    environment:
+      - WAZUH_MANAGER=${WAZUH_OVERLAY_ADDR}
+      - WAZUH_AGENT_NAME=ubuntu-agent-nb3
+    depends_on:
+      - wazuh-overlay-gateway
+      - netbird-peer-3
+
+
+volumes:
+  wazuh-indexer-data:
+  wazuh-manager-data:
+  wazuh-dashboard-data:

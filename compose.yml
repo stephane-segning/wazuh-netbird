@@ -10,6 +10,31 @@ version: "3.9"
 # `wazuh_net` network so that the Wazuh manager can reach the overlay without any
 # additional port forwarding.
 
+x-wazuh-version: &wazuh-version 4.14.1
+x-netbird-version: &netbird-version 0.60.8
+
+x-wazuh-credentials: &wazuh-credentials
+  INDEXER_USERNAME: admin
+  INDEXER_PASSWORD: SecretPassword
+  API_USERNAME: wazuh-wui
+  API_PASSWORD: MyS3cr37P450r.*-
+
+x-netbird-peer: &netbird-peer
+  image: netbirdio/netbird:${netbird-version}
+  cap_add:
+    - NET_ADMIN
+    - SYS_ADMIN
+    - SYS_RESOURCE
+  devices:
+    - /dev/net/tun:/dev/net/tun
+  environment:
+    - NB_SETUP_KEY=${NB_SETUP_KEY}
+  command: ["sh", "-lc", "netbird up --setup-key ${NB_SETUP_KEY} && tail -f /dev/null"]
+
+x-ubuntu-agent: &ubuntu-agent
+  build:
+    context: ./wazuh-agent-ubuntu
+
 networks:
   wazuh_net:
     driver: bridge
@@ -27,7 +52,7 @@ services:
   # Wazuh components (single‑node stack) – updated to version 4.14.1
   # ---------------------------------------------------------------------------
   wazuh.indexer:
-    image: wazuh/wazuh-indexer:4.14.1
+    image: wazuh/wazuh-indexer:${wazuh-version}
     hostname: wazuh.indexer
     networks:
       - wazuh_net
@@ -46,7 +71,7 @@ services:
       - wazuh-indexer-data:/var/lib/wazuh-indexer
 
   wazuh.manager:
-    image: wazuh/wazuh-manager:4.14.1
+    image: wazuh/wazuh-manager:${wazuh-version}
     hostname: wazuh.manager
     networks:
       - wazuh_net
@@ -60,22 +85,19 @@ services:
       - "55000:55000"
     environment:
       # Tell the manager where to find the indexer (uses HTTPS by default).
-      - INDEXER_URL=https://wazuh.indexer:9200
-      - INDEXER_USERNAME=admin
-      - INDEXER_PASSWORD=SecretPassword
+      INDEXER_URL: https://wazuh.indexer:9200
       # Filebeat TLS settings; set verification to 'none' if you skip mounting certificates.
       # Disable certificate verification to simplify the demo.  If you mount
       # proper TLS certificates, set verification back to 'full' and point
       # SSL_CERTIFICATE_AUTHORITIES/SSL_CERTIFICATE/SSL_KEY at your files.
-      - FILEBEAT_SSL_VERIFICATION_MODE=none
+      FILEBEAT_SSL_VERIFICATION_MODE: none
       # These variables are ignored when verification is disabled but are
       # defined for completeness.
-      - SSL_CERTIFICATE_AUTHORITIES=/etc/ssl/root-ca.pem
-      - SSL_CERTIFICATE=/etc/ssl/filebeat.pem
-      - SSL_KEY=/etc/ssl/filebeat.key
+      SSL_CERTIFICATE_AUTHORITIES: /etc/ssl/root-ca.pem
+      SSL_CERTIFICATE: /etc/ssl/filebeat.pem
+      SSL_KEY: /etc/ssl/filebeat.key
       # API credentials for the Wazuh web UI
-      - API_USERNAME=wazuh-wui
-      - API_PASSWORD=MyS3cr37P450r.*-
+      <<: *wazuh-credentials
     ulimits:
       memlock:
         soft: -1
@@ -88,7 +110,7 @@ services:
       - wazuh-manager-data:/var/ossec/data
 
   wazuh.dashboard:
-    image: wazuh/wazuh-dashboard:4.14.1
+    image: wazuh/wazuh-dashboard:${wazuh-version}
     hostname: wazuh.dashboard
     networks:
       - wazuh_net
@@ -102,13 +124,10 @@ services:
       - "5601:443"
     environment:
       # Credentials used by the dashboard to authenticate to the indexer and manager.
-      - INDEXER_USERNAME=admin
-      - INDEXER_PASSWORD=SecretPassword
-      - WAZUH_API_URL=https://wazuh.manager
-      - DASHBOARD_USERNAME=kibanaserver
-      - DASHBOARD_PASSWORD=kibanaserver
-      - API_USERNAME=wazuh-wui
-      - API_PASSWORD=MyS3cr37P450r.*-
+      WAZUH_API_URL: https://wazuh.manager
+      DASHBOARD_USERNAME: kibanaserver
+      DASHBOARD_PASSWORD: kibanaserver
+      <<: *wazuh-credentials
     volumes:
       # Persist dashboard configuration and custom assets.
       - wazuh-dashboard-data:/var/lib/wazuh-dashboard
@@ -118,83 +137,46 @@ services:
   # ---------------------------------------------------------------------------
   netbird-peer-wazuh:
     # Pin the NetBird client to the latest stable release (0.60.8 as of Dec 2025)
-    image: netbirdio/netbird:0.60.8
+    <<: *netbird-peer
     container_name: netbird-peer-wazuh
     networks:
       - wazuh_net
-    cap_add:
-      - NET_ADMIN
-      - SYS_ADMIN
-      - SYS_RESOURCE
-    devices:
-      - /dev/net/tun:/dev/net/tun
-    environment:
-      # Use the setup key from your NetBird management portal to auto‑enroll.
-      - NB_SETUP_KEY=${NB_SETUP_KEY}
-    command: ["sh", "-lc", "netbird up --setup-key ${NB_SETUP_KEY} && tail -f /dev/null"]
     depends_on:
       - wazuh.manager
 
   netbird-peer-1:
-    image: netbirdio/netbird:0.60.8
+    <<: *netbird-peer
     container_name: netbird-peer-1
     networks:
       - nb1_net
-    cap_add:
-      - NET_ADMIN
-      - SYS_ADMIN
-      - SYS_RESOURCE
-    devices:
-      - /dev/net/tun:/dev/net/tun
-    environment:
-      - NB_SETUP_KEY=${NB_SETUP_KEY}
-    command: ["sh", "-lc", "netbird up --setup-key ${NB_SETUP_KEY} && tail -f /dev/null"]
 
   netbird-peer-2:
-    image: netbirdio/netbird:0.60.8
+    <<: *netbird-peer
     container_name: netbird-peer-2
     networks:
       - nb2_net
-    cap_add:
-      - NET_ADMIN
-      - SYS_ADMIN
-      - SYS_RESOURCE
-    devices:
-      - /dev/net/tun:/dev/net/tun
-    environment:
-      - NB_SETUP_KEY=${NB_SETUP_KEY}
-    command: ["sh", "-lc", "netbird up --setup-key ${NB_SETUP_KEY} && tail -f /dev/null"]
 
   netbird-peer-3:
-    image: netbirdio/netbird:0.60.8
+    <<: *netbird-peer
     container_name: netbird-peer-3
     networks:
       - nb3_net
-    cap_add:
-      - NET_ADMIN
-      - SYS_ADMIN
-      - SYS_RESOURCE
-    devices:
-      - /dev/net/tun:/dev/net/tun
-    environment:
-      - NB_SETUP_KEY=${NB_SETUP_KEY}
-    command: ["sh", "-lc", "netbird up --setup-key ${NB_SETUP_KEY} && tail -f /dev/null"]
 
   netbird:
-    container_name: netbird
-    hostname: <HOSTNAME>
+    container_name: netbird_main
+    hostname: netbird-main
     cap_add:
       - NET_ADMIN
       - SYS_ADMIN
       - SYS_RESOURCE
-    network_mode: host
+    #network_mode: host
     networks:
       - nb_main
     environment:
       - NB_SETUP_KEY=${NB_SETUP_KEY}
     #volumes:
     #  - netbird-client:/var/lib/netbird
-    image: netbirdio/netbird:0.60.8
+    image: netbirdio/netbird:${netbird-version}
 
   # ---------------------------------------------------------------------------
   # NetBird -> Wazuh "overlay gateway"
@@ -232,8 +214,7 @@ services:
   # without embedding NetBird in the endpoint image.
   # ---------------------------------------------------------------------------
   ubuntu-agent-wazuh-net:
-    build:
-      context: ./wazuh-agent-ubuntu
+    <<: *ubuntu-agent
     container_name: ubuntu-agent-wazuh-net
     hostname: ubuntu-agent-wazuh-net
     networks:
@@ -245,8 +226,7 @@ services:
       - wazuh.manager
 
   ubuntu-agent-nb1:
-    build:
-      context: ./wazuh-agent-ubuntu
+    <<: *ubuntu-agent
     container_name: ubuntu-agent-nb1
     hostname: ubuntu-agent-nb1
     network_mode: "service:netbird-peer-1"
@@ -258,8 +238,7 @@ services:
       - netbird-peer-1
 
   ubuntu-agent-nb2:
-    build:
-      context: ./wazuh-agent-ubuntu
+    <<: *ubuntu-agent
     container_name: ubuntu-agent-nb2
     hostname: ubuntu-agent-nb2
     network_mode: "service:netbird-peer-2"
@@ -271,8 +250,7 @@ services:
       - netbird-peer-2
 
   ubuntu-agent-nb3:
-    build:
-      context: ./wazuh-agent-ubuntu
+    <<: *ubuntu-agent
     container_name: ubuntu-agent-nb3
     hostname: ubuntu-agent-nb3
     network_mode: "service:netbird-peer-3"

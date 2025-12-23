@@ -1,0 +1,140 @@
+services:
+  netbird-peer-wazuh:
+    image: netbirdio/netbird:0.60.8
+    container_name: netbird-peer-wazuh
+    networks:
+      - wazuh_net
+    cap_add:
+      - NET_ADMIN
+      - SYS_ADMIN
+      - SYS_RESOURCE
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    environment:
+      - NB_SETUP_KEY=${NB_SETUP_KEY}
+    command: ["sh", "-lc", "netbird up --setup-key ${NB_SETUP_KEY} && tail -f /dev/null"]
+    depends_on:
+      - wazuh.manager
+
+  netbird-peer-1:
+    image: netbirdio/netbird:0.60.8
+    container_name: netbird-peer-1
+    networks:
+      - nb1_net
+    cap_add:
+      - NET_ADMIN
+      - SYS_ADMIN
+      - SYS_RESOURCE
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    environment:
+      - NB_SETUP_KEY=${NB_SETUP_KEY}
+    command: ["sh", "-lc", "netbird up --setup-key ${NB_SETUP_KEY} && tail -f /dev/null"]
+
+  netbird-peer-2:
+    image: netbirdio/netbird:0.60.8
+    container_name: netbird-peer-2
+    networks:
+      - nb2_net
+    cap_add:
+      - NET_ADMIN
+      - SYS_ADMIN
+      - SYS_RESOURCE
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    environment:
+      - NB_SETUP_KEY=${NB_SETUP_KEY}
+    command: ["sh", "-lc", "netbird up --setup-key ${NB_SETUP_KEY} && tail -f /dev/null"]
+
+  netbird-peer-3:
+    image: netbirdio/netbird:0.60.8
+    container_name: netbird-peer-3
+    networks:
+      - nb3_net
+    cap_add:
+      - NET_ADMIN
+      - SYS_ADMIN
+      - SYS_RESOURCE
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    environment:
+      - NB_SETUP_KEY=${NB_SETUP_KEY}
+    command: ["sh", "-lc", "netbird up --setup-key ${NB_SETUP_KEY} && tail -f /dev/null"]
+
+  wazuh-overlay-gateway:
+    image: alpine:3.20
+    container_name: wazuh-overlay-gateway
+    depends_on:
+      - netbird-peer-wazuh
+      - wazuh.manager
+    network_mode: "service:netbird-peer-wazuh"
+    command: >
+      sh -lc '
+        apk add --no-cache socat >/dev/null &&
+        echo "Forwarding overlay -> wazuh.manager (1514/tcp, 1515/tcp, 55000/tcp, 514/udp)" &&
+        socat TCP-LISTEN:1514,fork,reuseaddr TCP:wazuh.manager:1514 &
+        socat TCP-LISTEN:1515,fork,reuseaddr TCP:wazuh.manager:1515 &
+        socat TCP-LISTEN:55000,fork,reuseaddr TCP:wazuh.manager:55000 &
+        socat UDP-RECVFROM:514,fork,reuseaddr UDP-SENDTO:wazuh.manager:514 &
+        wait
+      '
+
+  ubuntu-agent-wazuh-net:
+    build:
+      context: ./wazuh-agent-ubuntu
+    container_name: ubuntu-agent-wazuh-net
+    hostname: ubuntu-agent-wazuh-net
+    networks:
+      - wazuh_net
+    environment:
+      - WAZUH_MANAGER=wazuh.manager
+      - WAZUH_AGENT_NAME=ubuntu-agent-wazuh-net
+    depends_on:
+      - wazuh.manager
+
+  ubuntu-agent-nb1:
+    build:
+      context: ./wazuh-agent-ubuntu
+    container_name: ubuntu-agent-nb1
+    hostname: ubuntu-agent-nb1
+    network_mode: "service:netbird-peer-1"
+    environment:
+      - WAZUH_MANAGER=${WAZUH_OVERLAY_ADDR}
+      - WAZUH_AGENT_NAME=ubuntu-agent-nb1
+    depends_on:
+      - wazuh-overlay-gateway
+      - netbird-peer-1
+
+  ubuntu-agent-nb2:
+    build:
+      context: ./wazuh-agent-ubuntu
+    container_name: ubuntu-agent-nb2
+    hostname: ubuntu-agent-nb2
+    network_mode: "service:netbird-peer-2"
+    environment:
+      - WAZUH_MANAGER=${WAZUH_OVERLAY_ADDR}
+      - WAZUH_AGENT_NAME=ubuntu-agent-nb2
+    depends_on:
+      - wazuh-overlay-gateway
+      - netbird-peer-2
+
+  ubuntu-agent-nb3:
+    build:
+      context: ./wazuh-agent-ubuntu
+    container_name: ubuntu-agent-nb3
+    hostname: ubuntu-agent-nb3
+    network_mode: "service:netbird-peer-3"
+    environment:
+      - WAZUH_MANAGER=${WAZUH_OVERLAY_ADDR}
+      - WAZUH_AGENT_NAME=ubuntu-agent-nb3
+    depends_on:
+      - wazuh-overlay-gateway
+      - netbird-peer-3
+
+networks:
+  nb1_net:
+    driver: bridge
+  nb2_net:
+    driver: bridge
+  nb3_net:
+    driver: bridge

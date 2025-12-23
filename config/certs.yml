@@ -1,0 +1,349 @@
+nodes:
+  # Wazuh indexer server nodes
+  indexer:
+    - name: wazuh.indexer
+      ip: wazuh.indexer
+
+  # Wazuh server nodes
+  # Use node_type only with more than one Wazuh manager
+  server:
+    - name: wazuh.manager
+      ip: wazuh.manager
+
+  # Wazuh dashboard node
+  dashboard:
+    - name: wazuh.dashboard
+      ip: wazuh.dashboard
+#
+# The script will also generate the opensearch_dashboards.yml file.
+# This file will be used by the wazuh-dashboard container.
+#
+# The script will also generate the wazuh_manager.conf file.
+# This file will be used by the wazuh-manager container.
+#
+# The script will also generate the wazuh.indexer.yml file.
+# This file will be used by the wazuh-indexer container.
+#
+# The script will also generate the wazuh.dashboard.yml file.
+# This file will be used by the wazuh-dashboard container.
+#
+# The script will also generate the wazuh.manager.yml file.
+# This file will be used by the wazuh-manager container.
+#
+# The script will also generate the wazuh.yml file.
+# This file will be used by the wazuh-dashboard container.
+#
+# The script will also generate the opensearch_dashboards.yml file.
+# This file will be used by the wazuh-dashboard container.
+#
+# The script will also generate the wazuh_manager.conf file.
+# This file will be used by the wazuh-manager container.
+#
+# The script will also generate the wazuh.indexer.yml file.
+# This file will be used by the wazuh-indexer container.
+#
+# The script will also generate the wazuh.dashboard.yml file.
+# This file will be used by the wazuh-dashboard container.
+#
+# The script will also generate the wazuh.manager.yml file.
+# This file will be used by the wazuh-manager container.
+#
+# The script will also generate the wazuh.yml file.
+# This file will be used by the wazuh-dashboard container.
+#
+# The script will also generate the opensearch_dashboards.yml file.
+# This file will be used by the wazuh-dashboard container.
+#
+# The script will also generate the wazuh_manager.conf file.
+# This file will be used by the wazuh-manager container.
+#
+# The script will also generate the wazuh.indexer.yml file.
+# This file will be used by the wazuh-indexer container.
+#
+# The script will also generate the wazuh.dashboard.yml file.
+# This file will be used by the wazuh-dashboard container.
+#
+# The script will also generate the wazuh.manager.yml file.
+# This file will be used by the wazuh-manager container.
+#
+# The script will also generate the wazuh.yml file.
+# This file will be used by the wazuh-dashboard container.
+#
+# The script will also generate the opensearch_dashboards.yml file.
+# This file will be used by the wazuh-dashboard container.
+#
+# The script will also generate the wazuh_manager.conf file.
+# This file will be used by the wazuh-manager container.
+#
+# The script will also generate the wazuh.indexer.yml file.
+# This file will be used by the wazuh-indexer container.
+#
+# The script will also generate the wazuh.dashboard.yml file.
+# This file will be used by the wazuh-dashboard container.
+#
+# The script will also generate the wazuh.manager.yml file.
+# This file will be used by the wazuh-manager container.
+#
+# The script will also generate the wazuh.yml file.
+# This file will be used by the wazuh-dashboard container.
+#
+# The script will also generate the opensearch_dashboards.yml file.
+# This file will be used by the wazuh-dashboard container.
+#
+# The script will also generate the wazuh_manager.conf file.
+# This file will be used by the wazuh-manager container.
+#
+# The script will also generate the wazuh.indexer.yml file.
+# This file will be used by the wazuh-indexer container.
+#
+# The script will also generate the wazuh.dashboard.yml file.
+# This file will be used by the wazuh-dashboard container.
+#
+# The script will also generate the wazuh.manager.yml file.
+# This file will be used by the wazuh-manager container.
+#
+# The script will also generate the wazuh.yml file.
+# This file will be used by the wazuh-dashboard container.
+#
+# The script will also generate the opensearch_dashboards.yml file.
+# This file will be used by the wazuh-dashboard container.
+#
+# The script will also generate the wazuh_manager.conf file.
+# This file will be used by the wazuh-manager container.
+#
+# The script will also generate the wazuh.indexer.yml file.
+# This file will be used by the wazuh-indexer container.
+#
+# The script will also generate the wazuh.dashboard.yml file.
+# This file will be used by the wazuh-dashboard container.
+#
+# The script will also generate the wazuh.manager.yml file.
+# This file will be used by the wazuh-manager container.
+#
+# The script will also generate the wazuh.yml file.
+# This file will be used by the wazuh-dashboard container.
+#
+# The script will also generate the opensearch_dashboards.yml file.
+# This file will be used by the wazuh-dashboard container.
+#
+# The script will also generate the wazuh_manager.conf file.
+# This file will be used by the wazuh-manager container.
+#
+# The script will also generate the wazuh.indexer.yml file.
+# This file will be used by the wazuh-indexer container.
+#
+# The script will also generate the wazuh.dashboard.yml file.
+# This file will be used by the wazuh-dashboard container.
+#
+# The script will also generate the wazuh.manager.yml file.
+# This file will be used by the wazuh-manager container.
+#
+# The script will also generate the wazuh.yml file.
+# This file will be used by the wazuh-dashboard container.
+#
+# The script will also generate the opensearch_dashboards.yml file.
+# This file will be used by the wazuh-dashboard container.
+#
+# The script will also generate the wazuh_manager.conf file.
+# This file will be used by the wazuh-manager container.
+#
+# The script will also generate the wazuh.indexer.yml file.
+# This file will be used by the wazuh-indexer container.
+#
+# The script will also generate the wazuh.dashboard.yml file.
+# This file will be used by the wazuh-dashboard container.
+#
+# The script will also generate the wazuh.manager.yml file.
+# This file will be used by the wazuh-manager container.
+#
+# The script will also generate the wazuh.yml file.
+# This file will be used by the wazuh-dashboard container.
+#
+# The script will also generate the opensearch_dashboards.yml file.
+# This file will be used by the wazuh-dashboard container.
+#
+# The script will also generate the wazuh_manager.conf file.
+# This file will be used by the wazuh-manager container.
+#
+# The script will also generate the wazuh.indexer.yml file.
+# This file will be used by the wazuh-indexer container.
+#
+# The script will also generate the wazuh.dashboard.yml file.
+# This file will be used by the wazuh-dashboard container.
+#
+# The script will also generate the wazuh.manager.yml file.
+# This file will be used by the wazuh-manager container.
+#
+# The script will also generate the wazuh.yml file.
+# This file will be used by the wazuh-dashboard container.
+#
+# The script will also generate the opensearch_dashboards.yml file.
+# This file will be used by the wazuh-dashboard container.
+#
+# The script will also generate the wazuh_manager.conf file.
+# This file will be used by the wazuh-manager container.
+#
+# The script will also generate the wazuh.indexer.yml file.
+# This file will be used by the wazuh-indexer container.
+#
+# The script will also generate the wazuh.dashboard.yml file.
+# This file will be used by the wazuh-dashboard container.
+#
+# The script will also generate the wazuh.manager.yml file.
+# This file will be used by the wazuh-manager container.
+#
+# The script will also generate the wazuh.yml file.
+# This file will be used by the wazuh-dashboard container.
+#
+# The script will also generate the opensearch_dashboards.yml file.
+# This file will be used by the wazuh-dashboard container.
+#
+# The script will also generate the wazuh_manager.conf file.
+# This file will be used by the wazuh-manager container.
+#
+# The script will also generate the wazuh.indexer.yml file.
+# This file will be used by the wazuh-indexer container.
+#
+# The script will also generate the wazuh.dashboard.yml file.
+# This file will be used by the wazuh-dashboard container.
+#
+# The script will also generate the wazuh.manager.yml file.
+# This file will be used by the wazuh-manager container.
+#
+# The script will also generate the wazuh.yml file.
+# This file will be used by the wazuh-dashboard container.
+#
+# The script will also generate the opensearch_dashboards.yml file.
+# This file will be used by the wazuh-dashboard container.
+#
+# The script will also generate the wazuh_manager.conf file.
+# This file will be used by the wazuh-manager container.
+#
+# The script will also generate the wazuh.indexer.yml file.
+# This file will be used by the wazuh-indexer container.
+#
+# The script will also generate the wazuh.dashboard.yml file.
+# This file will be used by the wazuh-dashboard container.
+#
+# The script will also generate the wazuh.manager.yml file.
+# This file will be used by the wazuh-manager container.
+#
+# The script will also generate the wazuh.yml file.
+# This file will be used by the wazuh-dashboard container.
+#
+# The script will also generate the opensearch_dashboards.yml file.
+# This file will be used by the wazuh-dashboard container.
+#
+# The script will also generate the wazuh_manager.conf file.
+# This file will be used by the wazuh-manager container.
+#
+# The script will also generate the wazuh.indexer.yml file.
+# This file will be used by the wazuh-indexer container.
+#
+# The script will also generate the wazuh.dashboard.yml file.
+# This file will be used by the wazuh-dashboard container.
+#
+# The script will also generate the wazuh.manager.yml file.
+# This file will be used by the wazuh-manager container.
+#
+# The script will also generate the wazuh.yml file.
+# This file will be used by the wazuh-dashboard container.
+#
+# The script will also generate the opensearch_dashboards.yml file.
+# This file will be used by the wazuh-dashboard container.
+#
+# The script will also generate the wazuh_manager.conf file.
+# This file will be used by the wazuh-manager container.
+#
+# The script will also generate the wazuh.indexer.yml file.
+# This file will be used by the wazuh-indexer container.
+#
+# The script will also generate the wazuh.dashboard.yml file.
+# This file will be used by the wazuh-dashboard container.
+#
+# The script will also generate the wazuh.manager.yml file.
+# This file will be used by the wazuh-manager container.
+#
+# The script will also generate the wazuh.yml file.
+ax_config:
+  certs:
+    # CA
+    ca:
+      # Validity of the CA certificate in days
+      days: 3650
+      # Country of the CA certificate
+      country: "US"
+      # State of the CA certificate
+      state: "California"
+      # Locality of the CA certificate
+      locality: "Mountain View"
+      # Organization of the CA certificate
+      organization: "Wazuh"
+      # Organizational unit of the CA certificate
+      organizational_unit: "Wazuh"
+      # Common name of the CA certificate
+      common_name: "Wazuh"
+    # Indexer
+    indexer:
+      # Validity of the indexer certificate in days
+      days: 3650
+      # Country of the indexer certificate
+      country: "US"
+      # State of the indexer certificate
+      state: "California"
+      # Locality of the indexer certificate
+      locality: "Mountain View"
+      # Organization of the indexer certificate
+      organization: "Wazuh"
+      # Organizational unit of the indexer certificate
+      organizational_unit: "Wazuh"
+      # Common name of the indexer certificate
+      common_name: "wazuh.indexer"
+    # Dashboard
+    dashboard:
+      # Validity of the dashboard certificate in days
+      days: 3650
+      # Country of the dashboard certificate
+      country: "US"
+      # State of the dashboard certificate
+      state: "California"
+      # Locality of the dashboard certificate
+      locality: "Mountain View"
+      # Organization of the dashboard certificate
+      organization: "Wazuh"
+      # Organizational unit of the dashboard certificate
+      organizational_unit: "Wazuh"
+      # Common name of the dashboard certificate
+      common_name: "wazuh.dashboard"
+    # Manager
+    manager:
+      # Validity of the manager certificate in days
+      days: 3650
+      # Country of the manager certificate
+      country: "US"
+      # State of the manager certificate
+      state: "California"
+      # Locality of the manager certificate
+      locality: "Mountain View"
+      # Organization of the manager certificate
+      organization: "Wazuh"
+      # Organizational unit of the manager certificate
+      organizational_unit: "Wazuh"
+      # Common name of the manager certificate
+      common_name: "wazuh.manager"
+    # Admin
+    admin:
+      # Validity of the admin certificate in days
+      days: 3650
+      # Country of the admin certificate
+      country: "US"
+      # State of the admin certificate
+      state: "California"
+      # Locality of the admin certificate
+      locality: "Mountain View"
+      # Organization of the admin certificate
+      organization: "Wazuh"
+      # Organizational unit of the admin certificate
+      organizational_unit: "Wazuh"
+      # Common name of the admin certificate
+      common_name: "admin"

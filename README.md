@@ -43,22 +43,35 @@ flowchart LR
   %% Logical relationships
   D -->|talks to| I
   M -->|talks to| I
-  NBW -->|overlay reaches| GW
   GW -->|forwards to| M
   A0 -->|registers to| M
 
   A1 -.->|shares netns| NB1
   A2 -.->|shares netns| NB2
   A3 -.->|shares netns| NB3
-  A1 -->|registers to overlay addr| M
-  A2 -->|registers to overlay addr| M
-  A3 -->|registers to overlay addr| M
+  A1 -->|connects to overlay addr| GW
+  A2 -->|connects to overlay addr| GW
+  A3 -->|connects to overlay addr| GW
 ```
+
+## Goal: Wazuh traffic over Netbird
+Goal: ensure a Wazuh agent living “inside” a Netbird peer’s network namespace can reach the Wazuh manager as if it were on the same network.
+
+How it works in this demo:
+- `ubuntu-agent-nb1/2/3` set `WAZUH_MANAGER=${WAZUH_OVERLAY_ADDR}` and share the network namespace of `netbird-peer-1/2/3` (`network_mode: service:...`).
+- Those agents connect to the Netbird overlay address `WAZUH_OVERLAY_ADDR` on Wazuh ports (1514/tcp, 1515/tcp, 55000/tcp, 514/udp).
+- `wazuh-overlay-gateway` shares the network namespace of `netbird-peer-wazuh`, listens on those ports, and forwards them to `wazuh.manager` on the Docker network `wazuh_net`.
+
+Important notes:
+- `WAZUH_OVERLAY_ADDR` must be the **Netbird overlay IP of `netbird-peer-wazuh`** (the peer hosting the port-forwarder), not an IP of `wazuh.manager`.
+- Netbird ACLs must allow `netbird-peer-1/2/3` to reach `WAZUH_OVERLAY_ADDR` on the forwarded ports.
+- `depends_on` does not guarantee Netbird is fully connected before agents start; initial connection attempts may fail until the overlay is up.
+- Routing being correct does not guarantee data shows up in Wazuh: agent enrollment/registration is not automated here.
 
 ## Prerequisites
 - Docker + Docker Compose V2 (`docker compose` CLI).
 - `just` task runner (e.g., `brew install just` or `cargo install just`).
-- A Netbird setup key and an overlay IP for the Wazuh manager.
+- A Netbird setup key and the overlay IP of `netbird-peer-wazuh`.
 
 ## Quickstart
 1) Configure environment:
@@ -70,6 +83,8 @@ flowchart LR
 4) Check status / logs:
    - `just ps`
    - `just logs`
+5) Smoke-test routing:
+   - `just test-routing`
 5) Tear down:
    - `just down`
 
@@ -79,6 +94,7 @@ flowchart LR
 - `just down` — stop the stack and keep volumes.
 - `just logs` — follow combined service logs (tail 200).
 - `just ps` — show container status.
+- `just test-routing` — verify TCP connectivity to `WAZUH_MANAGER` from the agent containers (does not validate enrollment).
 
 ## Known risks (intentionally unmitigated for demo)
 - Hardcoded credentials live in `wazuh.yml` environment variables (indexer, API, dashboard), making secrets easy to leak and hard to rotate.

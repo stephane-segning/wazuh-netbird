@@ -19,3 +19,10 @@ logs:
 
 ps:
   {{compose}} ps
+
+test-routing:
+  set -euo pipefail
+  {{compose}} exec -T ubuntu-agent-wazuh-net bash -lc 'for p in 1514 1515 55000; do timeout 3 bash -lc "</dev/tcp/$WAZUH_MANAGER/$p" >/dev/null && echo "ok ubuntu-agent-wazuh-net:$p"; done'
+  {{compose}} exec -T ubuntu-agent-nb1 bash -lc 'for p in 1514 1515 55000; do timeout 3 bash -lc "</dev/tcp/$WAZUH_MANAGER/$p" >/dev/null && echo "ok ubuntu-agent-nb1:$p"; done'
+  {{compose}} exec -T ubuntu-agent-nb2 bash -lc 'for p in 1514 1515 55000; do timeout 3 bash -lc "</dev/tcp/$WAZUH_MANAGER/$p" >/dev/null && echo "ok ubuntu-agent-nb2:$p"; done'
+  {{compose}} exec -T ubuntu-agent-nb3 bash -lc 'for p in 1514 1515 55000; do timeout 3 bash -lc "</dev/tcp/$WAZUH_MANAGER/$p" >/dev/null && echo "ok ubuntu-agent-nb3:$p"; done'

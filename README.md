@@ -67,6 +67,11 @@ Important notes:
 - Netbird ACLs must allow `netbird-peer-1/2/3` to reach `WAZUH_OVERLAY_ADDR` on the forwarded ports.
 - `depends_on` does not guarantee Netbird is fully connected before agents start; initial connection attempts may fail until the overlay is up.
 - Routing being correct does not guarantee data shows up in Wazuh: agent enrollment/registration is not automated here.
+## FAQ
+1. **Is this Netbird overlay the only option for routing the agents to Wazuh?**
+   - No. You could place agents on the same Docker network as the manager, expose the manager ports through existing networks/VPNs, attach the manager directly to Netbird, or use Netbird subnet routing instead of per-port forwarding.
+2. **Do I need a different overlay for each additional workload (e.g., `nginx`)?**
+   - No. Netbird gives you a single overlay network; you add peers or ACL rules as needed. Within this pattern you can forward many ports through the same gateway. Separate overlays would only be required if you need strict isolation between groups of services.
 
 ## Prerequisites
 - Docker + Docker Compose V2 (`docker compose` CLI).

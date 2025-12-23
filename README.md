@@ -67,6 +67,14 @@ Important notes:
 - Netbird ACLs must allow `netbird-peer-1/2/3` to reach `WAZUH_OVERLAY_ADDR` on the forwarded ports.
 - `depends_on` does not guarantee Netbird is fully connected before agents start; initial connection attempts may fail until the overlay is up.
 - Routing being correct does not guarantee data shows up in Wazuh: agent enrollment/registration is not automated here.
+## How this demo mirrors the NetBird pattern
+- `netbird-peers` all join one NetBird network using `NB_SETUP_KEY`, so that’s your shared overlay.
+- `netbird-peer-wazuh` is the reachable overlay endpoint; it owns the `WAZUH_OVERLAY_ADDR` that agents point at.
+- `wazuh.manager`, `wazuh.indexer`, and `wazuh.dashboard` never run NetBird — they stay on the Docker `wazuh_net` and talk to agents only through the overlay gateway.
+- `wazuh-overlay-gateway` shares the `netbird-peer-wazuh` namespace and proxy-forwards the Wazuh ports into `wazuh.manager`, acting as the bridge between overlay and private network.
+- `ubuntu-agent-nb1/2/3` run inside the NetBird peers’ network namespaces and connect to `WAZUH_OVERLAY_ADDR`, simulating remote workloads behind NAT.
+
+In production you might instead advertise the `wazuh_net` subnet from a routing peer so overlay clients can reach services behind it without per-port forwarding; `socat` is just a minimal stand-in for that bridge in this POC.
 ## FAQ
 1. **Is this Netbird overlay the only option for routing the agents to Wazuh?**
    - No. You could place agents on the same Docker network as the manager, expose the manager ports through existing networks/VPNs, attach the manager directly to Netbird, or use Netbird subnet routing instead of per-port forwarding.
